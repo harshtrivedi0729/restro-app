@@ -12,18 +12,18 @@ export const revalidate = 0
 
 export default async function AdminDashboard() {
   // Initialize with default values
-  let restaurants = []
-  let recentBookings = []
-  let totalBookings = 0
-  let confirmedBookings = 0
-  let cancelledBookings = 0
-  let pendingBookings = 0
-  let todayBookings = 0
-  let totalRestaurantFeedbacks = 0
-  let totalDishFeedbacks = 0
-  let recentRestaurantFeedbacks = []
-  let avgRestaurantRating = 0
-  let firstRestaurant = null
+  let restaurants: any[] = []
+  let recentBookings: any[] = []
+  let totalBookings: number = 0
+  let confirmedBookings: number = 0
+  let cancelledBookings: number = 0
+  let pendingBookings: number = 0
+  let todayBookings: number = 0
+  let totalRestaurantFeedbacks: number = 0
+  let totalDishFeedbacks: number = 0
+  let recentRestaurantFeedbacks: any[] = []
+  let avgRestaurantRating: number = 0
+  let firstRestaurant: any = null
 
   try {
     restaurants = await prisma.restaurant.findMany({
