@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function HomePage() {
-  let restaurants = []
+  let restaurants: any[] = []
   
   try {
     restaurants = await prisma.restaurant.findMany({
