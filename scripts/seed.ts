@@ -4,10 +4,13 @@ const prisma = new PrismaClient()
 
 async function main() {
   console.log('Seeding database...')
+  console.log('DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 50) + '...')
 
   // Restaurant 1: Luxury
-  const restaurant1 = await prisma.restaurant.create({
-    data: {
+  const restaurant1 = await prisma.restaurant.upsert({
+    where: { slug: 'the-golden-spoon' },
+    update: {},
+    create: {
       name: 'The Golden Spoon',
       slug: 'the-golden-spoon',
       description: 'An opulent dining experience where luxury meets culinary artistry',
@@ -42,8 +45,10 @@ async function main() {
   })
 
   // Restaurant 2: Romantic
-  const restaurant2 = await prisma.restaurant.create({
-    data: {
+  const restaurant2 = await prisma.restaurant.upsert({
+    where: { slug: 'moonlight-terrace' },
+    update: {},
+    create: {
       name: 'Moonlight Terrace',
       slug: 'moonlight-terrace',
       description: 'A romantic rooftop escape with breathtaking city views',
@@ -68,8 +73,10 @@ async function main() {
   })
 
   // Restaurant 3: Party
-  const restaurant3 = await prisma.restaurant.create({
-    data: {
+  const restaurant3 = await prisma.restaurant.upsert({
+    where: { slug: 'electric-nights' },
+    update: {},
+    create: {
       name: 'Electric Nights',
       slug: 'electric-nights',
       description: 'Where the party never stops and the energy is electric',
@@ -93,8 +100,10 @@ async function main() {
   })
 
   // Restaurant 4: Artistic
-  const restaurant4 = await prisma.restaurant.create({
-    data: {
+  const restaurant4 = await prisma.restaurant.upsert({
+    where: { slug: 'canvas-cuisine' },
+    update: {},
+    create: {
       name: 'Canvas & Cuisine',
       slug: 'canvas-cuisine',
       description: 'Where art meets food in a symphony of flavors and aesthetics',
@@ -333,8 +342,10 @@ async function main() {
 
   // Create tables for QR codes
   for (let i = 1; i <= 10; i++) {
-    await prisma.table.create({
-      data: {
+    await prisma.table.upsert({
+      where: { qrCode: `${restaurant1.slug}-T${i}` },
+      update: {},
+      create: {
         restaurantId: restaurant1.id,
         tableNumber: `T${i}`,
         qrCode: `${restaurant1.slug}-T${i}`,
