@@ -1,0 +1,322 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RestaurantVibe {
+  LUXURY
+  ROMANTIC
+  PARTY
+  CALM
+  ARTISTIC
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingOccasion {
+  DATE
+  BIRTHDAY
+  ANNIVERSARY
+  BUSINESS
+  CASUAL
+  CELEBRATION
+}
+
+enum SeatingPreference {
+  WINDOW
+  OUTDOOR
+  PRIVATE
+  BAR
+  NO_PREFERENCE
+}
+
+model Restaurant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  
+  // Branding & Personality
+  vibe        RestaurantVibe
+  targetAudience String // "Gen-Z", "Wealthy", "Families", etc.
+  primaryColor String @default("#D4AF37") // Gold default
+  secondaryColor String
+  accentColor String
+  fontFamily String @default("Inter")
+  animationIntensity String @default("medium") // low, medium, high
+  darkModeDefault Boolean @default(true)
+  
+  // Location
+  address     String
+  city        String
+  state       String
+  pincode     String
+  phone       String
+  email       String
+  
+  // Media
+  logoUrl     String?
+  coverImageUrl String?
+  heroVideoUrl String?
+  
+  // Story & Legacy
+  founderStory String?
+  chefStory    String?
+  awards       Json? // Array of awards
+  timeline     Json? // Array of timeline events
+  signatureDishes String? // JSON array of dish IDs
+  
+  // Settings
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  menus     Menu[]
+  dishes    Dish[]
+  bookings  Booking[]
+  tables    Table[]
+  stories   Story[]
+  admins    Admin[]
+  analytics Analytics[]
+  restaurantFeedbacks RestaurantFeedback[]
+  dishFeedbacks      DishFeedback[]
+  
+  @@index([slug])
+}
+
+model Menu {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categories   MenuCategory[]
+  
+  @@index([restaurantId])
+}
+
+model MenuCategory {
+  id          String   @id @default(cuid())
+  menuId      String
+  name        String
+  description String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  
+  menu        Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  dishes      Dish[]
+  
+  @@index([menuId])
+}
+
+model Dish {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  categoryId      String?
+  name            String
+  description     String
+  story           String? // Why this dish is famous
+  price           Float
+  imageUrl        String?
+  
+  // Nutritional Info
+  protein         Float? // in grams
+  calories        Int?
+  allergens       String[] // Array of allergen names
+  
+  // Features
+  isBestSeller    Boolean  @default(false)
+  isChefRecommend Boolean  @default(false)
+  isVegetarian    Boolean  @default(false)
+  isVegan         Boolean  @default(false)
+  isSpicy         Boolean  @default(false)
+  
+  // Ingredients (as icons/data)
+  ingredients     Json? // Array of ingredient objects with icon, name
+  
+  // Pairings
+  drinkPairings   Json? // Array of drink/wine recommendations
+  upsellDishes    String[] // Array of dish IDs that people usually order with this
+  
+  // Analytics
+  orderCount      Int      @default(0)
+  rating          Float?   @default(0)
+  
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category        MenuCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  feedbacks       DishFeedback[]
+  
+  @@index([restaurantId])
+  @@index([categoryId])
+}
+
+model Table {
+  id           String   @id @default(cuid())
+  restaurantId String
+  tableNumber  String
+  qrCode       String   @unique
+  capacity     Int
+  location     String? // "Window", "Outdoor", "Private", "Bar"
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  bookings     Booking[]
+  
+  @@index([restaurantId])
+  @@index([qrCode])
+}
+
+model Booking {
+  id                String            @id @default(cuid())
+  restaurantId      String
+  tableId           String?
+  customerName      String
+  customerEmail     String
+  customerPhone     String
+  personCount       Int
+  occasion          BookingOccasion?
+  seatingPreference SeatingPreference?
+  bookingDate       DateTime
+  bookingTime       String // Time slot
+  status            BookingStatus    @default(PENDING)
+  priorityBooking   Boolean          @default(false)
+  preOrderItems     Json? // Array of dish IDs with quantities
+  specialRequests   String?
+  estimatedWaitTime Int? // in minutes
+  aiSuggestedTime   String? // AI-suggested best time
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  confirmedAt       DateTime?
+  cancelledAt       DateTime?
+  
+  restaurant        Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table             Table?            @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  
+  @@index([restaurantId])
+  @@index([bookingDate])
+  @@index([status])
+}
+
+model Story {
+  id           String   @id @default(cuid())
+  restaurantId String
+  title        String
+  content      String
+  imageUrl     String?
+  videoUrl     String?
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@index([restaurantId])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  restaurantId String?
+  role      String   @default("owner") // owner, manager, staff
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+  
+  @@index([restaurantId])
+}
+
+model Analytics {
+  id           String   @id @default(cuid())
+  restaurantId String
+  date         DateTime @default(now())
+  
+  // Booking Metrics
+  totalBookings       Int      @default(0)
+  confirmedBookings   Int      @default(0)
+  cancelledBookings   Int      @default(0)
+  noShowBookings      Int      @default(0)
+  peakHour            String? // e.g., "19:00"
+  averagePartySize    Float?
+  
+  // Revenue Metrics (for future)
+  totalRevenue        Float    @default(0)
+  
+  // Dish Metrics
+  topDishes           Json? // Array of dish IDs with order counts
+  
+  // Customer Metrics
+  repeatCustomers     Int      @default(0)
+  newCustomers        Int      @default(0)
+  
+  createdAt           DateTime @default(now())
+  
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@index([restaurantId])
+  @@index([date])
+}
+
+model RestaurantFeedback {
+  id           String   @id @default(cuid())
+  restaurantId String
+  customerName String
+  customerEmail String?
+  rating       Int      // 1-5 stars
+  comment      String?
+  isVerified   Boolean  @default(false) // Verified customer (from booking)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@index([restaurantId])
+  @@index([rating])
+}
+
+model DishFeedback {
+  id           String   @id @default(cuid())
+  dishId       String
+  restaurantId String
+  customerName String
+  customerEmail String?
+  rating       Int      // 1-5 stars
+  comment      String?
+  isVerified   Boolean  @default(false) // Verified customer (from booking)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  dish         Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  @@index([dishId])
+  @@index([restaurantId])
+  @@index([rating])
+}
+
